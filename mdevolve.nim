@@ -78,54 +78,51 @@ when isMainModule:
   let Verb = existsenv("VerbTest")
   # Simple 2D system
   type A = array[2,float]
+  type S = object
+    x:A
+    rs:A  # Share some calculations
+    old:bool  # We update rs if old
+  # To keep our old code
+  template `[]`(s:S,i:untyped):untyped = s.x[i]
+  proc updateR(s:var S) =
+    if s.old:
+      let
+        x0 = s.x[0]
+        x1 = s.x[1]
+        r2 = x0*x0+x1*x1
+      s.rs[0] = r2
+      s.rs[1] = sqrt r2
+      s.old = false
+  proc r(s:var S):float =
+    s.updateR
+    s.rs[1]
+  proc r2(s:var S):float =
+    s.updateR
+    s.rs[0]
   # Coulomb and Harmonic potential
-  proc Vc(x:A):float =
+  proc Vc(s:var S):float = -1 / s.r + s.r2 / 2.0
+  proc Fc(s:var S):A =
     let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-    -1 / r + r2 / 2.0
-  proc Fc(x:A):A =
-    let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-      r3 = r*r2
+      x0 = s[0]
+      x1 = s[1]
+      r3 = s.r*s.r2
     result[0] = -(x0 + x0 / r3)
     result[1] = -(x1 + x1 / r3)
   # Separating the log potential for this demo
-  proc Vl0(x:A):float =
+  proc Vl0(s:var S):float = -ln(s.r/(s.r+1))
+  proc Fl0(s:var S):A =
     let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-    -ln(r/(r+1))
-  proc Fl0(x:A):A =
-    let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-      d = 1/(r2*(1+r))
+      x0 = s[0]
+      x1 = s[1]
+      d = 1/(s.r2*(1+s.r))
     result[0] = x0 * d
     result[1] = x1 * d
-  proc Vl1(x:A):float =
+  proc Vl1(s:var S):float = -ln(s.r+1)
+  proc Fl1(s:var S):A =
     let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-    -ln(r+1)
-  proc Fl1(x:A):A =
-    let
-      x0 = x[0]
-      x1 = x[1]
-      r2 = x0*x0+x1*x1
-      r = sqrt r2
-      d = 1/(r2+r)
+      x0 = s[0]
+      x1 = s[1]
+      d = 1/(s.r2+s.r)
     result[0] = x0 * d
     result[1] = x1 * d
   proc K(p:A):float =
@@ -138,17 +135,17 @@ when isMainModule:
 
   # Assemble it as TestSys
   type TestSys = object
-    x:A
+    x:S
     p:A
-  proc Vc(s:TestSys):float = Vc s.x
-  proc Fc(s:TestSys):A = Fc s.x
-  proc Vl0(s:TestSys):float = Vl0 s.x
-  proc Fl0(s:TestSys):A = Fl0 s.x
-  proc Vl1(s:TestSys):float = Vl1 s.x
-  proc Fl1(s:TestSys):A = Fl1 s.x
+  proc Vc(s:var TestSys):float = Vc s.x
+  proc Fc(s:var TestSys):A = Fc s.x
+  proc Vl0(s:var TestSys):float = Vl0 s.x
+  proc Fl0(s:var TestSys):A = Fl0 s.x
+  proc Vl1(s:var TestSys):float = Vl1 s.x
+  proc Fl1(s:var TestSys):A = Fl1 s.x
   proc K(s:TestSys):float = K s.p
   proc dK(s:TestSys):A = dK s.p
-  proc status(s:TestSys):string =
+  proc status(s:var TestSys):string =
     result = "x: " & $s.x[0] & " " & $s.x[1]
     result &= "  p: " & $s.p[0] & " " & $s.p[1]
     let
@@ -178,10 +175,12 @@ when isMainModule:
     let d = delta s
     s.s.x[0] += t*d[0]
     s.s.x[1] += t*d[1]
+    s.s.x.old = true
   proc evolve(s:MDVc|MDVl0|MDVl1, t:float) =
     let d = delta s
     s.s.p[0] += t*d[0]
     s.s.p[1] += t*d[1]
+    s.s.x.old = true
 
   # Force gradient update
   proc fgupdate(s:MDVc|MDVl0|MDVl1):auto = FGupdate[type(s)](s:s)
@@ -195,10 +194,12 @@ when isMainModule:
     let x = s.s.x
     s.s.x[0] += h*d[0]
     s.s.x[1] += h*d[1]
+    s.s.x.old = true
     let f = delta s
     s.s.p[0] += t*f[0]
     s.s.p[1] += t*f[1]
     s.s.x = x
+    s.s.x.old = true
 
   var s:TestSys
   let
@@ -214,7 +215,8 @@ when isMainModule:
         VK = algo2[MDVc,MDK](n:4, x:MDVc(s:s.addr), y:MDK(s:s.addr))
         Vl0VK = algo1[MDVl0,type(VK)](n:4, x:MDVl0(s:s.addr), y:VK)
         H = algo0[MDVl1,type(Vl0VK)](n:steps, x:MDVl1(s:s.addr), y:Vl0VK)
-      s.x = [1.0,0]
+      s.x.x = [1.0,0]
+      s.x.old = true
       s.p = [0.0,0.7]
       let h0 = s.K + s.Vc + s.Vl0 + s.Vl1
       for i in 0..<n:
