@@ -1,17 +1,43 @@
 type Concur[X,Y] = object
   x:X
   y:Y
-  n:int
 proc evolve*(S:Concur, t:float) =
+  mixin evolve
   # Calculate forces at the same time
   S.x.evolve t
   S.y.evolve t
+
+type Combine[X,Y] = object
+  x:X
+  y:Y
+template sharedEvolver(X,Y:untyped):untyped = discard  # FIXME
+iterator combinedSteps(S,T:untyped):float = discard  # FIXME
+proc evolve*(S:Combine, t:float) =
+  mixin evolve
+  # Combine two integrators.
+  # Requires both share exactly one base updater,
+  # i.e. exp(t T)), that updates X with P,
+  # and other updaters unique to each that updat P with X,
+  # i.e. exp(t Sx), exp(t Sy), with [Sx,Sy]=0,
+  # such that the combined evolution integrate the Hamiltonian
+  # system of T+Sx+Sy.
+  # Only works for positive time steps in the shared updater, T.
+
+  # Discover which type is the shared one
+  type T = sharedEvolver(S.X, S.Y)
+
+  for d in combinedSteps(S, T):
+    S.x.evolveStep(t,d)
+    S.y.evolveStep(t,d)
 
 type Leapfrog[X,Y] = object
   x:X
   y:Y
   n:int
+template mkLeapfrog*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  Leapfrog[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
 proc evolve*(S:LeapFrog, t:float) =
+  mixin evolve
   let
     h = t / S.n.float
     hh = 0.5*h
@@ -27,7 +53,10 @@ type SW92[X,Y] = object
   x:X
   y:Y
   n:int
+template mkSW92*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  SW92[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
 proc evolve*(S:SW92, t:float) =
+  mixin evolve
   ## Sexton & Weingarten (1992)
   let
     h = t / S.n.float
@@ -51,9 +80,12 @@ type FGYin11[X,Y] = object
   x:X
   y:Y
   n:int
+template mkFGYin11*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  FGYin11[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
 type FGupdate[X] = object
   s:X
 proc evolve*(S:FGYin11, t:float) =
+  mixin evolve
   ## Force Gradient Integrator, H. Yin (2011)
   let
     h = t / S.n.float
