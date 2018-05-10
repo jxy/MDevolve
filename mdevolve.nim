@@ -1,3 +1,167 @@
+type Leapfrog[X,Y] = object
+  x:X
+  y:Y
+  n:int
+template mkLeapfrog*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  Leapfrog[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
+proc evolve*(S:LeapFrog, t:float) =
+  mixin evolve
+  let
+    h = t / S.n.float
+    hh = 0.5*h
+  S.x.evolve hh
+  S.y.evolve h
+  for i in 1..<S.n:
+    S.x.evolve h
+    S.y.evolve h
+  S.x.evolve hh
+
+type S5[X,Y] = object
+  x:X
+  y:Y
+  n:int
+  l:float
+template mkSW92*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  ## Sexton & Weingarten (1992)
+  S5[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY, l:1.0/6.0)
+template mkOmelyan2MN*[X,Y](steps:int, T:X, V:Y,
+    lambda = 0.1931833275037836):untyped =
+  ## Omelyan et. al. (2002)
+  S5[type(T),type(V)](n:steps, x:T, y:V, l:lambda)
+proc evolve*(S:S5, t:float) =
+  mixin evolve
+  let
+    h = t / S.n.float
+    h2 = 0.5 * h
+    h6 = S.l * h
+    h3 = 2.0 * h6
+    h23 = h - h3
+  S.x.evolve h6
+  S.y.evolve h2
+  S.x.evolve h23
+  S.y.evolve h2
+  for i in 1..<S.n:
+    S.x.evolve h3
+    S.y.evolve h2
+    S.x.evolve h23
+    S.y.evolve h2
+  S.x.evolve h6
+
+type S9[X,Y] = object
+  x:X
+  y:Y
+  n:int
+  r,t,l:float
+template mkOmelyan4MN4FP*[X,Y](steps:int, T:X, V:Y,
+    rho = 0.1786178958448091,
+    theta = -0.06626458266981843,
+    lambda = 0.7123418310626056):untyped =
+  ## Omelyan et. al. (2003)
+  S9[type(T),type(V)](n:steps, x:T, y:V, r:rho, t:theta, l:lambda)
+proc evolve*(S:S9, t:float) =
+  mixin evolve
+  let
+    h = t / S.n.float
+    a = S.r * h
+    b = S.l * h
+    c = S.t * h
+    d = (0.5 - S.l) * h
+    e = (1.0 - 2*(S.t+S.r)) * h
+    a2 = 2 * a
+  S.x.evolve a
+  S.y.evolve b
+  S.x.evolve c
+  S.y.evolve d
+  S.x.evolve e
+  S.y.evolve d
+  S.x.evolve c
+  S.y.evolve b
+  for i in 1..<S.n:
+    S.x.evolve a2
+    S.y.evolve b
+    S.x.evolve c
+    S.y.evolve d
+    S.x.evolve e
+    S.y.evolve d
+    S.x.evolve c
+    S.y.evolve b
+  S.x.evolve a
+
+type S11[X,Y] = object
+  x:X
+  y:Y
+  n:int
+  r,t,l,m:float
+template mkOmelyan4MN5FV*[X,Y](steps:int, V:X, T:Y,
+    theta = 0.08398315262876693,
+    rho = 0.2539785108410595,
+    lambda = 0.6822365335719091,
+    mu = -0.03230286765269967):untyped =
+  ## Omelyan et. al. (2003)
+  S11[type(V),type(T)](n:steps, x:V, y:T, r:rho, t:theta, l:lambda, m:mu)
+proc evolve*(S:S11, t:float) =
+  mixin evolve
+  let
+    h = t / S.n.float
+    a = S.t * h
+    b = S.r * h
+    c = S.l * h
+    d = S.m * h
+    e = (0.5 - (S.l+S.t)) * h
+    f = (1.0 - 2*(S.m+S.r)) * h
+    a2 = 2 * a
+  S.x.evolve a
+  S.y.evolve b
+  S.x.evolve c
+  S.y.evolve d
+  S.x.evolve e
+  S.y.evolve f
+  S.x.evolve e
+  S.y.evolve d
+  S.x.evolve c
+  S.y.evolve b
+  for i in 1..<S.n:
+    S.x.evolve a2
+    S.y.evolve b
+    S.x.evolve c
+    S.y.evolve d
+    S.x.evolve e
+    S.y.evolve f
+    S.x.evolve e
+    S.y.evolve d
+    S.x.evolve c
+    S.y.evolve b
+  S.x.evolve a
+
+type FGYin11[X,Y] = object
+  ## Force Gradient Integrator, H. Yin (2011)
+  x:X
+  y:Y
+  n:int
+template mkFGYin11*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
+  FGYin11[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
+type FGupdate[X] = object
+  s:X
+proc evolve*(S:FGYin11, t:float) =
+  mixin evolve
+  ## Force Gradient Integrator, H. Yin (2011)
+  let
+    h = t / S.n.float
+    h2 = 0.5*h
+    h3 = h/3.0
+    h23 = (2.0/3.0)*h
+    h6 = h/6.0
+  S.x.evolve h6
+  S.y.evolve h2
+  S.x.fgupdate.evolve h23
+  S.y.evolve h2
+  for i in 1..<S.n:
+    S.x.evolve h3
+    S.y.evolve h2
+    S.x.fgupdate.evolve h23
+    S.y.evolve h2
+  S.x.evolve h6
+
 type Concur[X,Y] = object
   x:X
   y:Y
@@ -29,80 +193,6 @@ proc evolve*(S:Combine, t:float) =
   for d in combinedSteps(S, T):
     S.x.evolveStep(t,d)
     S.y.evolveStep(t,d)
-
-type Leapfrog[X,Y] = object
-  x:X
-  y:Y
-  n:int
-template mkLeapfrog*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
-  Leapfrog[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
-proc evolve*(S:LeapFrog, t:float) =
-  mixin evolve
-  let
-    h = t / S.n.float
-    hh = 0.5*h
-  S.x.evolve hh
-  S.y.evolve h
-  for i in 1..<S.n:
-    S.x.evolve h
-    S.y.evolve h
-  S.x.evolve hh
-
-type SW92[X,Y] = object
-  ## Sexton & Weingarten (1992)
-  x:X
-  y:Y
-  n:int
-template mkSW92*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
-  SW92[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
-proc evolve*(S:SW92, t:float) =
-  mixin evolve
-  ## Sexton & Weingarten (1992)
-  let
-    h = t / S.n.float
-    h2 = 0.5*h
-    h3 = h/3.0
-    h23 = (2.0/3.0)*h
-    h6 = h/6.0
-  S.x.evolve h6
-  S.y.evolve h2
-  S.x.evolve h23
-  S.y.evolve h2
-  for i in 1..<S.n:
-    S.x.evolve h3
-    S.y.evolve h2
-    S.x.evolve h23
-    S.y.evolve h2
-  S.x.evolve h6
-
-type FGYin11[X,Y] = object
-  ## Force Gradient Integrator, H. Yin (2011)
-  x:X
-  y:Y
-  n:int
-template mkFGYin11*[X,Y](steps:int, algoX:X, algoY:Y):untyped =
-  FGYin11[type(algoX),type(algoY)](n:steps, x:algoX, y:algoY)
-type FGupdate[X] = object
-  s:X
-proc evolve*(S:FGYin11, t:float) =
-  mixin evolve
-  ## Force Gradient Integrator, H. Yin (2011)
-  let
-    h = t / S.n.float
-    h2 = 0.5*h
-    h3 = h/3.0
-    h23 = (2.0/3.0)*h
-    h6 = h/6.0
-  S.x.evolve h6
-  S.y.evolve h2
-  S.x.fgupdate.evolve h23
-  S.y.evolve h2
-  for i in 1..<S.n:
-    S.x.evolve h3
-    S.y.evolve h2
-    S.x.fgupdate.evolve h23
-    S.y.evolve h2
-  S.x.evolve h6
 
 when isMainModule:
   import math, os
