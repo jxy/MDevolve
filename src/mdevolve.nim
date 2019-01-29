@@ -352,7 +352,7 @@ template mkFGYin11*(V,T,Vfg,save,load:untyped, steps = 1,
   ## In addition to the usual updater, `V` and `T`, we need:
   ## `Vfg` that updates `x` using the force directly;
   ## `save` and `load` that save and load `x`.
-  proc fVfg(t:float):untyped {.gensym.} =
+  proc fVfg(t:float) {.gensym.} =
     let h = (3.0/32.0)*t*t  # 1r24=3r32**:2r3
     save
     Vfg@:h
