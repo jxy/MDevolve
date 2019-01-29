@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Xiao-Yong Jin"
 description   = "Integrator framework for Molecular Dynamic evolutions"
 license       = "MIT"
