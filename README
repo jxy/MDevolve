@@ -1,0 +1,112 @@
+NAME
+     MDevolve: Integrator framework for Molecular Dynamic evolutions
+
+DESCRIPTION
+     To use:
+       1. Create individual integrators from update procedures,
+          using one of the `newIntegratorPair`.
+       2. Compose integrators using `mk...`.
+       3. Start the integration with `evolve`.
+       4. Finish the integration with `finish`.
+
+SYNOPSIS
+     const mdevolveVersion*:int = 1
+     type
+       Integrator* = ref object
+       ParIntegrator* = ref object
+         nonZeroStep*:float
+         nonZeroStepWarn*:float
+       Integrators* = ref object
+     func `$`*(x:Integrator):string
+     func `$`*(x:ParIntegrator):string
+     proc steps*(x:Integrator):int
+     proc steps*(x:ParIntegrator):int
+     proc `steps=`*(x:Integrator, n:int)
+     proc `steps=`*(x:ParIntegrator, n:int)
+     proc forceGradient*(x:Integrator):Integrator
+     proc `forceGradient=`*(x:Integrator, G:Integrator)
+     proc `[]`*(xs:Integrators, n:int):Integrator
+     template newIntegratorPair*(f,g:proc(t:float)):(Integrator,Integrator)
+     template newIntegratorPair*(f:proc(ts:openarray[float]),g:proc(t:float)):(Integrators,Integrator)
+     template newIntegratorPair*(f:proc(t:float),g:proc(ts:openarray[float])):(Integrator,Integrators)
+     template newIntegratorPair*(f:proc(ts:openarray[float]),g:proc(ts:openarray[float])):(Integrators,Integrators)
+     template newIntegratorPair*(f:proc(ts,ss:openarray[float]),g:proc(t:float)):(Integrators,Integrator)
+     template newIntegratorPair*(f:proc(t:float),g:proc(ts,ss:openarray[float])):(Integrator,Integrators)
+     macro newIntegratorPair*(fs:tuple, g:proc(t:float)):auto
+     macro newIntegratorPair*(f:proc(t:float), gs:tuple):auto
+     macro newIntegratorPair*(fs:tuple, gs:tuple):auto
+     proc newSerialEvolution*(id:string, mds:seq[tuple[i:Integrator,f:float]], steps:int, order:int):Integrator
+     proc add*(r:ParIntegrator, xs:varargs[Integrator])
+     proc newParallelEvolution*(xs:varargs[Integrator]):ParIntegrator
+     proc evolve*(x:Integrator, t:float)
+     proc evolve*(x:ParIntegrator, t:float)
+     proc finish*(x:Integrator)
+     proc finish*(x:ParIntegrator)
+     proc approximateFGcoeff*(cv,cg:float):tuple[tf:float,tg:float]
+     proc approximateFGcoeff2*(cv,cg:float, b = 0.2):tuple[tf:array[2,float],tg:array[2,float]]
+     proc mkLeapFrog*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan2MN*(T,V:Integrator, steps = 1,
+         lambda = 0.1931833275037836):Integrator
+     proc mkSW92*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN4FP*(T,V:Integrator, steps = 1,
+         rho = 0.1786178958448091,
+         theta = -0.06626458266981843,
+         lambda = 0.7123418310626056):Integrator
+     proc mkOmelyan4MN5FV*(T,V:Integrator, steps = 1,
+         rho = 0.2539785108410595,
+         theta = -0.03230286765269967,
+         vartheta = 0.08398315262876693,
+         lambda = 0.6822365335719091):Integrator
+     proc mkOmelyan4MN5FP*(T,V:Integrator, steps = 1,
+         rho = 0.2750081212332419,
+         theta = -0.1347950099106792,
+         vartheta= -0.08442961950707149,
+         lambda = 0.3549000571574260):Integrator
+     proc mkOmelyan6MN7FV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN2F2GV*(T,V:Integrator, steps = 1,
+         xi = -17.0/18000.0):Integrator
+     proc mkOmelyan4MN2F1GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN3F3GP*(T,V:Integrator, steps = 1,
+         lambda = 0.2825633404177051,
+         chi = 0.003035236056708454):Integrator
+     proc mkOmelyan4MN3F2GP*(T,V:Integrator, steps = 1,
+         lambda = 0.3152315246820299):Integrator
+     proc mkOmelyan4MN3F1GP*(T,V:Integrator, steps = 1,
+         lambda = 0.2470939580390842):Integrator
+     proc mkOmelyan4MN3F3GV*(T,V:Integrator, steps = 1,
+         theta = 0.2728983001988755,
+         chi = 0.002960781208329478):Integrator
+     proc mkOmelyan4MN3F2GV*(T,V:Integrator, steps = 1,
+         theta = 0.2813980611667719):Integrator
+     proc mkOmelyan4MN3F1GV*(T,V:Integrator, steps = 1,
+         theta = 0.2409202729169543):Integrator
+     proc mkOmelyan4MN4F2GVG*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN4F2GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN5F2GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN5F1GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN5F2GP*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan4MN5F1GP*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan6MN5F5GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan6MN5F4GV*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan6MN5F5GP*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan6MN5F3GP*(T,V:Integrator, steps = 1):Integrator
+     proc mkOmelyan8S11F11GP*(T,V:Integrator, steps = 1):Integrator
+     proc mkCreutzGocksch*(S:Integrator, steps = 1):Integrator
+     proc mkOmelyan8CK4P4*(S4:Integrator, steps = 1):Integrator
+     proc mkOmelyan10CK4P7*(S4:Integrator, steps = 1):Integrator
+     proc mkOmelyan12CK4P12*(S4:Integrator, steps = 1):Integrator
+     proc mkOmelyan10CK6P4*(S6:Integrator, steps = 1):Integrator
+     proc mkOmelyan12CK6P7*(S6:Integrator, steps = 1):Integrator
+
+EXAMPLES
+     See tests.
+
+LICENSE
+     This work is licensed under the MIT license.  See file
+     LICENSE for details.
+
+SEE ALSO
+     Creutz and Gocksch, https://doi.org/10.1103/PhysRevLett.63.9
+     Omelyan, Mryglod, and Folk, https://doi.org/10.1103/PhysRevE.66.026701
+     Omelyan, Mryglod, and Folk, https://doi.org/10.1016/S0010-4655(02)00754-3
+     Yin and Mawhinney, https://doi.org/10.22323/1.139.0051

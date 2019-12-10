@@ -1,0 +1,74 @@
+import mdevolve
+import sys2d, utils
+
+template t(K,VF:untyped) =
+  runtest("Omelyan4MN2F1GV", 1, @[-3.099894532176961e-07, -1.961400464267626e-08, -1.229832014004728e-09]):
+    mkOmelyan4MN2F1GV(T=K, V=VF)
+
+  runtest("Omelyan4MN2F2GV", 1, @[-2.5234926082085e-07, -1.601704302522933e-08, -1.005113325902585e-09]):
+    mkOmelyan4MN2F2GV(T=K, V=VF)
+
+  runtest("Omelyan4MN3F3GP", 1, @[-1.243171121600994e-09, -8.186873401427874e-11, -5.191846952357082e-12]):
+    mkOmelyan4MN3F3GP(T=K, V=VF)
+
+  runtest("Omelyan4MN3F1GP", 1, @[-3.609558540951241e-08, -2.315032165967068e-09, -1.456705867042274e-10]):
+    mkOmelyan4MN3F1GP(T=K, V=VF)
+
+  runtest("Omelyan4MN3F3GV", 1, @[-2.796954667871887e-09, -1.528168702691346e-10, -9.180656235230344e-12]):
+    mkOmelyan4MN3F3GV(T=K, V=VF)
+
+  runtest("Omelyan4MN3F2GV", 1, @[-1.323480258719201e-08, -8.232494685955771e-10, -5.138112157965224e-11]):
+    mkOmelyan4MN3F2GV(T=K, V=VF)
+
+  runtest("Omelyan4MN3F1GV", 1, @[-8.137213658443443e-08, -4.991490998307313e-09, -3.103959311800963e-10]):
+    mkOmelyan4MN3F1GV(T=K, V=VF)
+
+  runtest("Omelyan4MN4F2GVG", 1, @[6.628034763256352e-07, -1.016378092799641e-10, -2.385869279919461e-12], 2):
+    mkOmelyan4MN4F2GVG(T=K, V=VF)
+
+  runtest("Omelyan4MN4F2GV", 1, @[6.628034763256352e-07, -1.016378092799641e-10, -2.385869279919461e-12], 2):
+    mkOmelyan4MN4F2GVG(T=K, V=VF)
+
+  runtest("Omelyan4MN5F2GV", 1, @[9.142635630787765e-07, -8.509395410527532e-10, -4.50710579968927e-11], 2):
+    mkOmelyan4MN5F2GV(T=K, V=VF)
+
+  runtest("Omelyan4MN5F1GV", 1, @[2.495061346419192e-06, -2.491429729190031e-09, -1.337570054715798e-10], 2):
+    mkOmelyan4MN5F1GV(T=K, V=VF)
+
+  runtest("Omelyan4MN5F2GP", 1, @[-2.215044121456344e-07, -3.967581818642429e-11, -3.359978961725574e-12], 2):
+    mkOmelyan4MN5F2GP(T=K, V=VF)
+
+  runtest("Omelyan4MN5F1GP", 1, @[-1.065115520226811e-06, -9.614669060908909e-10, -6.423350740192291e-11], 2):
+    mkOmelyan4MN5F1GP(T=K, V=VF)
+
+  # no gradient version for comparison
+  runtest("Omelyan6MN7FV", 1, @[1.807700011902114e-06, -2.733457904469105e-10, -4.519051799434237e-12], 2):
+    mkOmelyan6MN7FV(T=K, V=VF)
+
+  runtest("Omelyan6MN5F5GV", 1, @[1.728114036092521e-06, -3.427593764371295e-10, -5.669686942155749e-12], 2):
+    mkOmelyan6MN5F5GV(T=K, V=VF)
+
+  runtest("Omelyan6MN5F4GV", 1, @[1.899574459951481e-06, -3.20141246845651e-10, -5.299760630350647e-12], 2):
+    mkOmelyan6MN5F4GV(T=K, V=VF)
+
+  runtest("Omelyan6MN5F5GP", 1, @[-1.27824618223471e-06, 2.229660900354702e-10, 3.700151296470722e-12], 2):
+    mkOmelyan6MN5F5GP(T=K, V=VF)
+
+  runtest("Omelyan6MN5F3GP", 1, @[-1.326165675941127e-06, 2.248765618162452e-10, 3.7247982476174e-12], 2):
+    mkOmelyan6MN5F3GP(T=K, V=VF)
+
+  runtest("Omelyan8S11F11GP", 1, @[-2.42822316456337e-05, 7.763330045484906e-08, 8.884004643050503e-13], 4):
+    mkOmelyan8S11F11GP(T=K, V=VF)
+
+block:
+  let
+    (V, K) = newIntegratorPair((updateVF, updateGFG), updateK)
+    (VF, G) = V
+  VF.forceGradient = G
+  t(K, VF)
+
+block:
+  let
+    (VFG, K) = newIntegratorPair(updateVFG, updateK)
+    VF = VFG[0]
+  t(K, VF)
