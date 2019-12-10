@@ -13,4 +13,4 @@ before_install:
   - cd ..
 script:
   - nimble install -y
-  - nim c -d:release -r tests/test1.nim
+  - nimble test
