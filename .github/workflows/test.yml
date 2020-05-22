@@ -1,0 +1,44 @@
+name: test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PATH: "$GITHUB_WORKSPACE/Nim/bin:$PATH"
+    steps:
+    - name: checkout Nim
+      uses: actions/checkout@v2
+      with:
+        repository: nim-lang/Nim
+        ref: devel
+        path: Nim
+    - name: checkout Nim csources
+      uses: actions/checkout@v2
+      with:
+        repository: nim-lang/csources
+        path: Nim/csources
+    - name: build Nim csources
+      working-directory: Nim/csources
+      run: sh build.sh
+    - name: build Nim & nimble
+      working-directory: Nim
+      run: |
+        bin/nim c koch
+        ./koch boot -d:release -d:danger
+        ./koch nimble -d:release -d:danger
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        path: MDevolve
+    - name: install
+      working-directory: MDevolve
+      run: nimble install -y
+    - name: test
+      working-directory: MDevolve
+      run: nimble test
