@@ -1,5 +1,5 @@
 #[
-Copyright (c) 2018, 2019 Xiao-Yong Jin
+Copyright (c) 2018-2020 Xiao-Yong Jin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -160,7 +160,7 @@ proc `forceGradient=`*(x:Integrator, G:Integrator) =
       need:x.need, step:x.step, hasVTV:true, integrateVTV:G)
     x[] = y[]
   else:
-    quit("mdevolve: cannot assign force gradient integratro to: " & $x)
+    quit("mdevolve: cannot assign force gradient integrator to: " & $x)
 
 proc build(xs:Integrators, n:int):Integrator =
   let u = xs.updater
