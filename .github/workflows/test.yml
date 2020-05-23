@@ -1,10 +1,5 @@
 name: test
-
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -21,21 +16,21 @@ jobs:
       with:
         repository: nim-lang/csources
         path: Nim/csources
+    - name: set path to nim
+      run: echo "::add-path::${{ github.workspace }}/Nim/bin"
     - name: build Nim csources
       working-directory: Nim/csources
-      run: sh build.sh
+      run: make -j $(nproc)
     - name: build Nim & nimble
       working-directory: Nim
       run: |
-        bin/nim c koch
+        nim c koch
         ./koch boot -d:release -d:danger
         ./koch nimble -d:release -d:danger
     - name: checkout
       uses: actions/checkout@v2
       with:
         path: MDevolve
-    - name: set path
-      run: echo "::add-path::$GITHUB_WORKSPACE/Nim/bin"
     - name: install
       working-directory: MDevolve
       run: nimble install -y
