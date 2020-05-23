@@ -3,13 +3,17 @@ on: [push, pull_request]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        nim-branch: [version-1-2, devel]
+    name: nim-${{ matrix.nim-branch }}
     runs-on: ubuntu-latest
     steps:
     - name: checkout Nim
       uses: actions/checkout@v2
       with:
         repository: nim-lang/Nim
-        ref: devel
+        ref: ${{ matrix.nim-branch }}
         path: Nim
     - name: checkout Nim csources
       uses: actions/checkout@v2
