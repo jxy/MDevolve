@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      PATH: "$GITHUB_WORKSPACE/Nim/bin:$PATH"
     steps:
     - name: checkout Nim
       uses: actions/checkout@v2
@@ -36,6 +34,8 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: MDevolve
+    - name: set path
+      run: echo "::add-path::$GITHUB_WORKSPACE/Nim/bin"
     - name: install
       working-directory: MDevolve
       run: nimble install -y
