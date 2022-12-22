@@ -5,34 +5,28 @@ jobs:
   build:
     strategy:
       matrix:
-        nim-branch: [version-1-2, devel]
+        nim-branch: [version-1-6, version-2-0, devel]
     name: nim-${{ matrix.nim-branch }}
     runs-on: ubuntu-latest
     steps:
     - name: checkout Nim
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: nim-lang/Nim
         ref: ${{ matrix.nim-branch }}
         path: Nim
-    - name: checkout Nim csources
-      uses: actions/checkout@v2
-      with:
-        repository: nim-lang/csources
-        path: Nim/csources
     - name: set path to nim
       run: echo "::add-path::${{ github.workspace }}/Nim/bin"
-    - name: build Nim csources
-      working-directory: Nim/csources
-      run: make -j $(nproc)
     - name: build Nim & nimble
       working-directory: Nim
       run: |
-        nim c koch
-        ./koch boot -d:release -d:danger
-        ./koch nimble -d:release -d:danger
+        . ci/funs.sh
+        nimBuildCsourcesIfNeeded
+        ./bin/nim c --noNimblePath --skipUserCfg --skipParentCfg --hints:off koch
+        ./koch boot -d:release -d:danger --skipUserCfg --skipParentCfg --hints:off
+        ./koch nimble -d:release -d:danger --skipUserCfg --skipParentCfg --hints:off
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: MDevolve
     - name: install
