@@ -16,7 +16,7 @@ jobs:
         ref: ${{ matrix.nim-branch }}
         path: Nim
     - name: set path to nim
-      run: echo "::add-path::${{ github.workspace }}/Nim/bin"
+      run: echo "${{ github.workspace }}/Nim/bin" >> $GITHUB_PATH
     - name: build Nim & nimble
       working-directory: Nim
       run: |
